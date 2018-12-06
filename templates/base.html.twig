@@ -8,8 +8,22 @@
         {% endblock %}
     </head>
     <body>
+        <h1>list</h1>
         {% block body %}
-            <div> {{ number }} </div>
+           <ul>
+           {% for obj in data %}
+              <li>
+                {{ obj.id }}: {{ obj.text }},
+                {% if obj.ready == '1' %} 
+                    true
+                {% else %}
+                   false
+                {% endif %}
+              
+              </li>
+           {% endfor %}
+            </ul>
+
         {% endblock %}
         {% block javascripts %}
             {# <script src="{{ asset('js/main.js') }}"></script> #}
