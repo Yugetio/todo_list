@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+  composer:
+    image: 'composer:latest'
+    volumes:
+      - '.:/app'
+    command: 'true'
+
+  php-fpm:
+    build:
+      context: ./docker/php-fpm
+    volumes:
+      - './docker/php-fpm/php.ini:/usr/local/etc/php/php.ini'
+      - './:/var/www'
+    expose:
+      - '9000'
+
+  nginx:
+    build:
+      context: ./docker/nginx
+    volumes:
+      - './:/var/www'
+    ports:
+      - '8080:80'
+      - '8442:443'
+    depends_on:
+      - php-fpm
+
+  phpunit:
+    build:
+      context: ./docker/php-fpm
+    volumes:
+      - './docker/php-fpm/php.ini:/usr/local/etc/php/php.ini'
+      - './:/var/www'
+    command: vendor/bin/phpunit
+
+  db:
+    image: mariadb
+    restart: always
+    environment: 
+      MYSQL_ROOT_PASSWORD: 123456
+    volumes: 
+      - ./databases:/var/lib/mysql
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 6080:8080
