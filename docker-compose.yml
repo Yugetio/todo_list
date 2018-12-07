@@ -27,14 +27,6 @@ services:
     depends_on:
       - php-fpm
 
-  phpunit:
-    build:
-      context: ./docker/php-fpm
-    volumes:
-      - './docker/php-fpm/php.ini:/usr/local/etc/php/php.ini'
-      - './:/var/www'
-    command: vendor/bin/phpunit
-
   db:
     image: mariadb
     restart: always
