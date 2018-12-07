@@ -1,0 +1,7 @@
+tr[data-ready="1"] {
+  text-decoration: line-through;
+}
+
+tbody > tr td:first-child {
+  width: 30px;
+}

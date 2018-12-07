@@ -2,6 +2,7 @@
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
@@ -25,44 +26,68 @@ class DefaultController extends AbstractController
     }
 
   /**
-   * @Route("/", methods="POST")
+   * @Route("/item", methods="POST")
+   * @param Request $request
+   * @return Response
    */
-  public function createItem()
+  public function createItem(Request $request)
   {
-    $em = $this->getDoctrine()->getManager(); // получаэм доступ до entity
+    $req = json_decode($request->getContent(), true);
+    $em = $this->getDoctrine()->getManager();
 
     $item = new TodoList();
-    $item->setText('create some other app');
-    $item->setReady(false);
+    $item->setText($req['text']);
+    $item->setReady($req['ready']);
     $item->setUserId(1);
 
-    $em->persist($item); //сохраняєм без запроса до бд
+    $em->persist($item);
+    $em->flush();
+
+    return new Response('created with id: '.$item->getId());
+  }
+
+  /**
+   * @Route("/item", methods="PUT")
+   * @param Request $request
+   * @return Response
+   */
+  public function editItem(Request $request)
+  {
+    $em = $this->getDoctrine()->getManager();
+    $req = json_decode($request->getContent(), true);
+
+    $id = $req['id'];
+    $item = $em->find(TodoList::class, $id);
+
+    $text = $req['text'];
+    $ready = $req['ready'];
+    
+    $item->setText($text);
+    $item->setReady($ready);
 
     $em->flush();
 
-    $this->getAllItems();
-    return new Response('Check out this great product: ', 200);
+
+    return new JsonResponse(['edited' => 'yes', 'id' => $id, 'text' => $text, 'ready' => $ready  ]);
+  }
+
+  /**
+   * @Route("/item", methods="DELETE")
+   * @param Request $request
+   * @return Response
+   */
+  public function deleteItem(Request $request)
+  {
+    $em = $this->getDoctrine()->getManager();
+
+    $id = json_decode($request->getContent(), true)['id'];
+    
+    $item = $em->find(TodoList::class, $id);
+    $em->remove($item);
+    $em->flush();
+
+    return new Response('item was delete');
   }
 }
 
-  
-
-//create 
-
-
-
-//get one by id
-
-// $id = 1;
-
-// $item = $this->getDoctrine()
-//   ->getRepository(TodoList::class)
-//   ->find($id);
-
-// if (!$item) {
-//   throw $this->createNotFoundException(
-//       'No product found for id '.$id
-//   );
-// }
-
-// return new Response('Check out this great product: '.$item->getText());
+ 
