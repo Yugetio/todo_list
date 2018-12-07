@@ -11,6 +11,12 @@
   </head>
   <body class="container"> 
   {% block body %}
+
+    <div class="btn-group menu" role="group">
+      <button type="button" class="btn btn-secondary">List</button>
+      <button type="button" class="btn btn-secondary">Create</button>
+    </div>
+
     <form class="create-item">
       <div class="form-group">
         <label for="exampleInputEmail1">Text</label>
@@ -18,30 +24,35 @@
       </div>
       <div class="checkbox">
         <label>
-          <input type="checkbox" name="ready"> Check me
+          <input type="checkbox" name="ready">  ready
         </label>
       </div>
       <button type="button" class="btn btn-primary">Create</button>
     </form>
 
-    <hr>
-
-    <table class="table table-hover">
+    <table class="table">
       <thead>
         <tr>
           <th>#</th>
           <th>Text</th>
+          <th></th>
+          <th></th>
+          <th></th>
+
         </tr>  
       </thead>
       <tbody>
-
         {% for obj in data %}
           <tr data-ready="{{ obj.ready }}">
             <td> {{ loop.index }} </td>
             <td> {{ obj.text }} </td>
             <td> <input type="checkbox" name="ready" id="{{ obj.id }}"> </td>
-            {# <td> {{ obj.text }} </td> #}
-            {# <td> {{ delete }} </td> #}
+            <td>
+              <button type="button" class="btn btn-primary edit">edit</button>
+            </td>
+            <td>
+              <button type="button" class="btn btn-danger delete" id="{{ obj.id }}">Delete</button>
+            </td>
 
           </tr>
         {% endfor %}
@@ -51,7 +62,7 @@
 
     {% endblock %}
     {% block javascripts %}
-        <script src="{{ asset('script/main.js') }}"></script>
+      <script src="{{ asset('script/main.js') }}"></script>
     {% endblock %}
   </body>
 </html>

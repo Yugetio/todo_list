@@ -8,6 +8,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\TodoList;
 
+use Doctrine\ORM\EntityManager;
+
 class DefaultController extends AbstractController
 {
   /**
@@ -68,7 +70,7 @@ class DefaultController extends AbstractController
     $em->flush();
 
 
-    return new JsonResponse(['edited' => 'yes', 'id' => $id, 'text' => $text, 'ready' => $ready  ]);
+    return new Response('edited');
   }
 
   /**
