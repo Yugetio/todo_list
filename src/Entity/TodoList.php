@@ -73,4 +73,24 @@ class TodoList
 
         return $this;
     }
+
+    public function jsonDecode($request)
+    {
+        return json_decode($request->getContent(), true);
+    }
+
+    public function serialize($items)
+    {
+        $arrayCollection = array();
+
+        foreach($items as $item) {
+            $arrayCollection[] = array(
+                'id' => $item->getId(),
+                'text' => $item->getText(),
+                'ready' => $item->getReady()
+            );
+        }
+
+        return $arrayCollection;
+    }
 }

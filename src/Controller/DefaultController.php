@@ -6,12 +6,19 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
+use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\TodoList;
-
-use Doctrine\ORM\EntityManager;
 
 class DefaultController extends AbstractController
 {
+
+  private $em;
+
+  public function __construct(EntityManagerInterface $em)
+  {
+    $this->em = $em;
+  }
+
   /**
    * @Route("/", methods="GET")
    */
@@ -22,24 +29,16 @@ class DefaultController extends AbstractController
 
     /**
    * @Route("/items", methods="GET")
+   * @return JsonResponse
    */
   public function getAllItemsF()
   {
     $items = $this->getDoctrine()
       ->getRepository(TodoList::class)
-      ->findAll()
-    ;
+      ->findAll();
 
-    $arrayCollection = array();
+    $arrayCollection = TodoList::serialize($items);
 
-    foreach($items as $item) {
-      $arrayCollection[] = array(
-        'id' => $item->getId(),
-        'text' => $item->getText(),
-        'ready' => $item->getReady()
-     );
-    }
-    
     return new JsonResponse($arrayCollection, 200);
   }
 
@@ -50,18 +49,17 @@ class DefaultController extends AbstractController
    */
   public function createItem(Request $request)
   {
-    $req = json_decode($request->getContent(), true);
-    $em = $this->getDoctrine()->getManager();
+    $req = TodoList::jsonDecode($request);
 
     $item = new TodoList();
     $item->setText($req['text']);
     $item->setReady($req['ready']);
     $item->setUserId(1);
 
-    $em->persist($item);
-    $em->flush();
+    $this->em->persist($item);
+    $this->em->flush();
 
-    return new Response('created with id: '.$item->getId());
+    return new Response('created', 201);
   }
 
   /**
@@ -71,11 +69,10 @@ class DefaultController extends AbstractController
    */
   public function editItem(Request $request)
   {
-    $em = $this->getDoctrine()->getManager();
-    $req = json_decode($request->getContent(), true);
+    $req = TodoList::jsonDecode($request);
 
     $id = $req['id'];
-    $item = $em->find(TodoList::class, $id);
+    $item = $this->em->find(TodoList::class, $id);
 
     $text = $req['text'];
     $ready = $req['ready'];
@@ -83,10 +80,10 @@ class DefaultController extends AbstractController
     $item->setText($text);
     $item->setReady($ready);
 
-    $em->flush();
+    $this->em->flush();
 
 
-    return new Response('edited');
+    return new Response('edited', 200);
   }
 
   /**
@@ -96,15 +93,20 @@ class DefaultController extends AbstractController
    */
   public function deleteItem(Request $request)
   {
-    $em = $this->getDoctrine()->getManager();
+    $id = TodoList::jsonDecode($request)['id'];
+        
+    $item = $this->em->find(TodoList::class, $id);
 
-    $id = json_decode($request->getContent(), true)['id'];
-    
-    $item = $em->find(TodoList::class, $id);
-    $em->remove($item);
-    $em->flush();
+    if (!$item) {
+      throw new NotFoundHttpException(
+          'Item not found for id '.$id
+      );
+    }
 
-    return new Response('item was delete');
+    $this->em->remove($item);
+    $this->em->flush();
+
+    return new Response('item was delete', 200);
   }
 }
 
