@@ -9,6 +9,9 @@ use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\TodoList;
 
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+
 class DefaultController extends AbstractController
 {
 
@@ -31,15 +34,19 @@ class DefaultController extends AbstractController
    * @Route("/items", methods="GET")
    * @return JsonResponse
    */
-  public function getAllItemsF()
+  public function getAllItems()
   {
-    $items = $this->getDoctrine()
-      ->getRepository(TodoList::class)
-      ->findAll();
+    try {
+      $items = $this->getDoctrine()
+        ->getRepository(TodoList::class)
+        ->findAll();
 
-    $arrayCollection = TodoList::serialize($items);
+      $arrayCollection = TodoList::serialize($items);
 
-    return new JsonResponse($arrayCollection, 200);
+      return new JsonResponse($arrayCollection, 200);
+    } catch (\Exception $e) {
+      return new JsonResponse(['error' => $e->getMessage()], 500);
+    }
   }
 
   /**
@@ -49,17 +56,21 @@ class DefaultController extends AbstractController
    */
   public function createItem(Request $request)
   {
-    $req = TodoList::jsonDecode($request);
+    try { 
+      $req = TodoList::jsonDecode($request);
 
-    $item = new TodoList();
-    $item->setText($req['text']);
-    $item->setReady($req['ready']);
-    $item->setUserId(1);
+      $item = new TodoList();
+      $item->setText($req['text']);
+      $item->setReady($req['ready']);
+      $item->setUserId(1);
 
-    $this->em->persist($item);
-    $this->em->flush();
+      $this->em->persist($item);
+      $this->em->flush();
 
-    return new Response('created', 201);
+      return new Response('created', 201);
+    } catch (\Exception $e) {
+      return new JsonResponse(['error' => $e->getMessage()], 500);
+    }
   }
 
   /**
@@ -69,21 +80,41 @@ class DefaultController extends AbstractController
    */
   public function editItem(Request $request)
   {
-    $req = TodoList::jsonDecode($request);
+    try {
+      $req = TodoList::jsonDecode($request);
 
-    $id = $req['id'];
-    $item = $this->em->find(TodoList::class, $id);
+      $id = $req['id'];
+      $item = $this->em->find(TodoList::class, $id);
 
-    $text = $req['text'];
-    $ready = $req['ready'];
-    
-    $item->setText($text);
-    $item->setReady($ready);
+      if (!$item) {
+        throw new NotFoundHttpException(
+            'Item not found for id '.$id
+        );
+      }
+      
+      $text = $req['text'];
 
-    $this->em->flush();
+      if (!isset($text)) {
+        throw new BadRequestHttpException('Text from input shouldn`t be NULL');
+      }
 
+      $ready = $req['ready'];
 
-    return new Response('edited', 200);
+      if (!isset($ready)) {
+        throw new BadRequestHttpException('State of the element shouldn`t be NULL');
+      }
+      
+      $item->setText($text);
+      $item->setReady($ready);
+
+      $this->em->flush();
+
+      return new Response('edited', 200);
+    } catch (NotFoundHttpException $e) {
+      return new JsonResponse(['error' => $e->getMessage()], 404);
+    } catch (\Exception $e) {
+      return new JsonResponse(['error' => $e->getMessage()], 500);
+    }
   }
 
   /**
@@ -93,20 +124,24 @@ class DefaultController extends AbstractController
    */
   public function deleteItem(Request $request)
   {
-    $id = TodoList::jsonDecode($request)['id'];
-        
-    $item = $this->em->find(TodoList::class, $id);
+    try {
+      $id = TodoList::jsonDecode($request)['id'];
 
-    if (!$item) {
-      throw new NotFoundHttpException(
-          'Item not found for id '.$id
-      );
+      $item = $this->em->find(TodoList::class, $id);
+
+      if (!$item) {
+        throw new NotFoundHttpException(
+            'Item not found for id '.$id
+        );
+      }
+
+      $this->em->remove($item);
+      $this->em->flush();
+
+      return new Response('item was delete', 200);
+    } catch (\Exception $e) {
+      return new JsonResponse(['error' => $e->getMessage()], 500);
     }
-
-    $this->em->remove($item);
-    $this->em->flush();
-
-    return new Response('item was delete', 200);
   }
 }
 
