@@ -15,17 +15,33 @@ class DefaultController extends AbstractController
   /**
    * @Route("/", methods="GET")
    */
-    public function getAllItems()
+    public function renderIndex()
     {
-      $items = $this->getDoctrine()
-        ->getRepository(TodoList::class)
-        ->findAll()
-      ;
-      
-      return $this->render('base.html.twig', [
-          'data' => $items
-      ]);
+      return $this->render('base.html.twig');
     }
+
+    /**
+   * @Route("/items", methods="GET")
+   */
+  public function getAllItemsF()
+  {
+    $items = $this->getDoctrine()
+      ->getRepository(TodoList::class)
+      ->findAll()
+    ;
+
+    $arrayCollection = array();
+
+    foreach($items as $item) {
+      $arrayCollection[] = array(
+        'id' => $item->getId(),
+        'text' => $item->getText(),
+        'ready' => $item->getReady()
+     );
+    }
+    
+    return new JsonResponse($arrayCollection, 200);
+  }
 
   /**
    * @Route("/item", methods="POST")

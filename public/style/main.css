@@ -2,7 +2,7 @@
   margin-top: 30px;
 }
 
-tr[data-ready="1"] {
+.ready {
   background-color: rgba(168, 248, 167, 0.5);
 }
 
