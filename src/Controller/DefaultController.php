@@ -58,6 +58,11 @@ class DefaultController extends AbstractController
   {
     try { 
       $req = TodoList::jsonDecode($request);
+      $valid = TodoList::validate($req);
+
+      if ($valid){
+        throw new BadRequestHttpException('Text from input shouldn`t be empty');
+      }
 
       $item = new TodoList();
       $item->setText($req['text']);
@@ -95,13 +100,13 @@ class DefaultController extends AbstractController
       $text = $req['text'];
 
       if (!isset($text)) {
-        throw new BadRequestHttpException('Text from input shouldn`t be NULL');
+        throw new BadRequestHttpException('Text from input shouldn`t be empty');
       }
 
       $ready = $req['ready'];
 
       if (!isset($ready)) {
-        throw new BadRequestHttpException('State of the element shouldn`t be NULL');
+        throw new BadRequestHttpException('State of the element shouldn`t be empty');
       }
       
       $item->setText($text);

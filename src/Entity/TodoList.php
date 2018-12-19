@@ -4,6 +4,10 @@
 
 namespace App\Entity;
 
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\Validator\Validation;
+use Symfony\Component\Validator\Constraints as Assert;
+
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -92,5 +96,44 @@ class TodoList
         }
 
         return $arrayCollection;
+    }
+
+    static function validate(array $data)
+    {
+        $validator = Validation::createValidator();
+        $errors = [];
+
+        if (!isset($data['ready'])) {
+            throw new BadRequestHttpException('Ready shouldn`t be empty.');
+        }
+        if (!isset($data['text'])) {
+            throw new BadRequestHttpException('Text shouldn`t be empty.');
+        }
+        
+        $stateError = $validator->validate($data['ready'], [
+            new Assert\Type([
+                'type' => 'boolean',
+                'message' => 'The value {{ value }} is not a valid {{ type }}.'
+            ])
+        ]);
+
+        $messageError = $validator->validate($data['text'], [
+            new Assert\NotBlank(),
+            new Assert\Type([
+                'type' => 'string',
+                'message' => 'The value {{ value }} is not a valid {{ type }}.'
+            ]),
+            new Assert\Length([
+                'min' => 1,
+                'max' => 236,
+                'exactMessage' => 'The value {{ value }} must be 16 characters long!'
+            ])
+        ]);
+
+        if(count($stateError) > 0 || count($messageError) > 0) {
+            return true;
+        }
+
+        return false;
     }
 }

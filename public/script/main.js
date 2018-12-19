@@ -50,9 +50,11 @@
       if(res.ok) {
         reRenderTable();
         showList();
+      } else {
+        throw new Error('Something went wrong');
       }
     })
-    .catch(error => console.error(error.message));
+    .catch(error => console.error(error.message))
   }
 
 
@@ -116,8 +118,6 @@
 
     tableBody.appendChild(tr);
   }
-
-
 
   function setOnclick() {
 
